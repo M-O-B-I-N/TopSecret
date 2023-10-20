@@ -1,0 +1,96 @@
+
+class MainActivity : ComponentActivity() {
+    @OptIn(ExperimentalFoundationApi::class)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            val coroutineScope = rememberCoroutineScope()
+            val tab = listOf("tab1", "tab2")
+            val pagerState = rememberPagerState()
+            var interactionSource = remember { NoRippleInteractionSource() }
+            val tabIndex = pagerState.currentPage
+            Scaffold(Modifier.fillMaxSize()) {
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(it)
+                ) {
+                    TabRow(modifier = Modifier.fillMaxWidth(),
+                        selectedTabIndex = tabIndex,
+                        backgroundColor = MaterialTheme.colors.background,
+                        indicator = { tabPositions ->
+                            TabRowDefaults.Indicator(
+                                Modifier
+                                    .tabIndicatorOffset(
+                                        currentTabPosition = tabPositions[pagerState.currentPage],
+                                    )
+                                    // look here
+                                    .padding(horizontal = 40.dp),
+                                color = MaterialTheme.colors.primary,
+                                height = 2.dp,
+                            )
+                        },
+                        divider = {}) {
+                        tab.forEachIndexed { index, tabItem ->
+                            Tab(selectedContentColor = MaterialTheme.colors.primary,
+                                unselectedContentColor = MaterialTheme.colors.onBackground,
+                                selected = tabIndex == index,
+                                interactionSource = interactionSource,
+                                text = {
+                                    Text(
+                                        text = tabItem,
+                                    )
+                                },
+                                modifier = Modifier.wrapContentWidth(
+                                        Alignment.CenterHorizontally, false
+                                    ),
+                                onClick = {
+                                    coroutineScope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    HorizontalPager(
+                        pageSpacing = 2.dp,
+                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
+                        state = pagerState,
+                        verticalAlignment = Alignment.Top,
+                        pageCount = tab.size
+                    ) {
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(
+                                vertical = 10.dp, horizontal = 10.dp
+                            )
+                        ) {
+                            items(fakeList) { data ->
+                                Column(Modifier.fillMaxSize()) {
+                                    Image(
+                                        painter = painterResource(id = data.imageUrl),
+                                        contentDescription = "",
+                                        modifier = Modifier.size(200.dp)
+                                    )
+                                    Text(text = data.id)
+                                    Text(text = data.price)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+class NoRippleInteractionSource : MutableInteractionSource {
+
+    override val interactions: Flow<Interaction> = emptyFlow()
+
+    override suspend fun emit(interaction: Interaction) {}
+
+    override fun tryEmit(interaction: Interaction) = true
+}
